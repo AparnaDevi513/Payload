@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="790e78a5-10f1-4e56-b062-87f0c3b279b5" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="payloadFlow" doc:id="98225158-69e5-4811-90d5-dbb551509571" >
+		<http:listener doc:name="Listener" doc:id="13b05e2c-e88d-484e-8c09-1d869e8a83b4" config-ref="HTTP_Listener_config" path="/payload" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="f407c01c-2f17-46ea-ad58-6e443d96b569" message='#[payload]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="ca342278-0aad-496e-98a7-947905627225" message="#[payload.Colleges.Branchdetails.Branch]"/>
+		<set-variable value="#[payload.Colleges.Collegename]" doc:name="Set Variable" doc:id="bc594858-ee71-4ca0-8d20-18a995611cf8" variableName="collegeName"/>
+		<ee:transform doc:name="Transform Message" doc:id="ad32158c-b174-42b3-bbdc-5d50e2ca15ea">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+
+ payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="7071760b-e7c0-4257-b967-8bea4a500201" >
+			<when expression="#[vars.collegeName=='KLU']">
+				<ee:transform doc:name="Transform Message" doc:id="0d67bc62-7662-4068-a64d-ed42965f0133" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+   "Branch":payload.Colleges.Branchdetails.Branch
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="d7dd027c-6813-47cd-b231-168b67f88028" message="#[payload.Branch]"/>
+			</when>
+			<when expression="#[vars.collegeName=='Vignan']">
+				<ee:transform doc:name="Transform Message" doc:id="1476d020-2812-4f42-a8ee-efc1c5009d29" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"collegeName":payload.Colleges.Collegename
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="09daf39f-2b10-4674-afba-1bc31121bbf0" message="#[vars.Collegename]"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="1fd09931-afbc-4c85-98f8-724acddf509e" message='#["condition not satisfied"]'/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
